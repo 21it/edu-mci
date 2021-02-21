@@ -12,18 +12,25 @@ import EduMci.Import.External
 newtype Id = Id String
   deriving (Eq, Ord, Show, IsString)
 
-data BinOp = Plus | Minus | Times
+data BinOp
+  = Plus
+  | Minus
+  | Times
+  | Div
+  deriving (Eq, Ord, Show)
 
 data Stm
   = CompoundStm Stm Stm
   | AssignStm Id Exp
   | PrintStm [Exp]
+  deriving (Eq, Ord, Show)
 
 data Exp
   = IdExp Id
   | NumExp Int
   | OpExp Exp BinOp Exp
   | EseqExp Stm Exp
+  deriving (Eq, Ord, Show)
 
 --
 -- Example prog:
