@@ -25,6 +25,8 @@ source-repository head
 
 library
   exposed-modules:
+      EduMci.Chap1.Main
+      EduMci.Chap1.Prog1_5
       EduMci.Class
       EduMci.Data.AppM
       EduMci.Data.Env
@@ -37,7 +39,7 @@ library
       Paths_edu_mci
   hs-source-dirs:
       src
-  default-extensions: NoImplicitPrelude MultiParamTypeClasses LambdaCase OverloadedStrings ScopedTypeVariables
+  default-extensions: NoImplicitPrelude MultiParamTypeClasses LambdaCase OverloadedStrings ScopedTypeVariables GeneralizedNewtypeDeriving
   ghc-options: -Weverything -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction
   build-depends:
       async
@@ -83,7 +85,7 @@ executable edu-mci-exe
       Paths_edu_mci
   hs-source-dirs:
       app
-  default-extensions: NoImplicitPrelude MultiParamTypeClasses LambdaCase OverloadedStrings ScopedTypeVariables
+  default-extensions: NoImplicitPrelude MultiParamTypeClasses LambdaCase OverloadedStrings ScopedTypeVariables GeneralizedNewtypeDeriving
   ghc-options: -Weverything -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       async
@@ -126,6 +128,7 @@ test-suite edu-mci-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Chap1Spec
       Paths_edu_mci
   hs-source-dirs:
       test
