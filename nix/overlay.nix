@@ -14,7 +14,7 @@
     in
       {
         haskell-ide = import (
-          fetchTarball "https://github.com/tim2CF/ultimate-haskell-ide/tarball/a6c2ca747a8b226b9fac51b33600347df61d549f"
+          fetchTarball "https://github.com/tim2CF/ultimate-haskell-ide/tarball/6e505b1f9b55580940dd599e797b2db0b48d0540"
         ) {inherit vimBackground vimColorScheme;};
         haskellPackages = super.haskell.packages.ghc865.extend(
           self': super': {

@@ -1,7 +1,7 @@
-{ mkDerivation, async, base, bytestring, chronos, concur-core
-, concur-replica, containers, envparse, esqueleto, extra
-, file-embed, hpack, hspec, hspec-wai, katip, lens, microlens
-, monad-logger, persistent, persistent-migration
+{ mkDerivation, array, async, base, bytestring, chronos
+, concur-core, concur-replica, containers, envparse, esqueleto
+, extra, file-embed, hpack, hspec, hspec-wai, katip, lens
+, microlens, monad-logger, persistent, persistent-migration
 , persistent-postgresql, persistent-template, replica
 , resource-pool, retry, stdenv, stm, template-haskell, text, time
 , unbounded-delays, universum, unliftio, wai
@@ -14,26 +14,26 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    async base bytestring chronos concur-core concur-replica containers
-    envparse esqueleto extra file-embed hspec hspec-wai katip lens
-    microlens monad-logger persistent persistent-migration
+    array async base bytestring chronos concur-core concur-replica
+    containers envparse esqueleto extra file-embed hspec hspec-wai
+    katip lens microlens monad-logger persistent persistent-migration
     persistent-postgresql persistent-template replica resource-pool
     retry stm template-haskell text time unbounded-delays universum
     unliftio wai wai-middleware-static-embedded warp websockets
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [
-    async base bytestring chronos concur-core concur-replica containers
-    envparse esqueleto extra file-embed katip lens microlens
+    array async base bytestring chronos concur-core concur-replica
+    containers envparse esqueleto extra file-embed katip lens microlens
     monad-logger persistent persistent-migration persistent-postgresql
     persistent-template replica resource-pool retry stm
     template-haskell text time unbounded-delays universum unliftio wai
     wai-middleware-static-embedded warp websockets
   ];
   testHaskellDepends = [
-    async base bytestring chronos concur-core concur-replica containers
-    envparse esqueleto extra file-embed hspec hspec-wai katip lens
-    microlens monad-logger persistent persistent-migration
+    array async base bytestring chronos concur-core concur-replica
+    containers envparse esqueleto extra file-embed hspec hspec-wai
+    katip lens microlens monad-logger persistent persistent-migration
     persistent-postgresql persistent-template replica resource-pool
     retry stm template-haskell text time unbounded-delays universum
     unliftio wai wai-middleware-static-embedded warp websockets

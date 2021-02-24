@@ -23,6 +23,7 @@ dependencies:
 # foundation
 - base >= 4.7 && < 5
 - universum
+- array
 # time
 - time
 - chronos
