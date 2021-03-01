@@ -133,6 +133,8 @@ test-suite edu-mci-test
   main-is: Spec.hs
   other-modules:
       Chap1Spec
+      Chap2Spec
+      TigerSrc
       Paths_edu_mci
   hs-source-dirs:
       test

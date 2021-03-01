@@ -67,15 +67,22 @@ tokens :-
 <0> ";"              {newLex SEMICOLON}
 <0> ":"              {newLex COLON}
 <0> ","              {newLex COMMA}
+<0> @id              {newId}
 <0> @int             {newInt}
 <0> "/*"             {pushComment `andBegin` state_comment}
 <state_comment> "/*" {pushComment}
 <state_comment> "*/" {popComment}
 <state_comment> .    ;
 <state_comment> \n   ;
-
---<0> "\""       {newLex STRING String}
---<0> @id        {newLex ID String}
+<0>             \"   {startString `andBegin` state_string}
+<state_string>  \\n  {withString $ addChar '\n'}
+<state_string>  \\t  {withString $ addChar '\t'}
+<state_string>  \\\" {withString $ addChar '\"'}
+<state_string>  \\\\ {withString $ addChar '\\'}
+<state_string>  \"   {withString leaveString `andBegin` state_initial}
+<state_string>  \n   ;
+<state_string>  \\   {withString illegalEscapeSequence}
+<state_string>  .    {withString addCurrentChar}
 
 {
 
@@ -148,7 +155,10 @@ alexInitUserState = AlexUserStateVoid
 alexEOF :: Alex Lexeme
 alexEOF =
   pure $ Lexeme {
-    lexPosn = undefined,
+    --
+    -- TODO : fixme?
+    --
+    lexPosn = AlexPn 0 0 0,
     lexToken = EOF,
     lexRaw = Nothing
   }
@@ -176,6 +186,16 @@ newInt (pos, _, _, input) len =
           <> raw
           <> " on "
           <> show pos
+  where
+    raw = take len input
+
+newId :: AlexInput -> Int -> Alex Lexeme
+newId (pos, _, _, input) len =
+  pure $ Lexeme {
+    lexPosn = pos,
+    lexToken = ID raw,
+    lexRaw = Just raw
+  }
   where
     raw = take len input
 
@@ -221,5 +241,53 @@ popComment input len = do
           <> show input
           <> " not compatible with "
           <> show st
+
+startString :: AlexInput -> Int -> Alex Lexeme
+startString _ _ = do
+  alexSetUserState $ AlexUserStateString mempty
+  alexMonadScan
+
+withString ::
+  (String -> AlexInput -> Int -> Alex Lexeme)
+  -> AlexInput
+  -> Int
+  -> Alex Lexeme
+withString f input len = do
+  st <- alexGetUserState
+  case st of
+    AlexUserStateVoid -> failure st
+    AlexUserStateString x -> f x input len
+    AlexUserStateComment _ -> failure st
+  where
+    failure st =
+      alexError $ "Unexpected withString st " <> show st
+
+addChar :: Char -> String -> AlexInput -> Int -> Alex Lexeme
+addChar x xs _ _ = do
+  alexSetUserState . AlexUserStateString $ x : xs
+  alexMonadScan
+
+leaveString :: String -> AlexInput -> Int -> Alex Lexeme
+leaveString xs (pos, _, _, input) len = do
+  alexSetUserState AlexUserStateVoid
+  pure $ Lexeme {
+    lexPosn = pos,
+    lexToken = STRING $ reverse xs,
+    --
+    -- TODO : fix this (always one char)
+    -- and test no information loss here
+    --
+    lexRaw = Just $ take len input
+  }
+
+illegalEscapeSequence :: String -> AlexInput -> Int -> Alex Lexeme
+illegalEscapeSequence _ (pos, _, _, _) _ =
+  alexError $ "Illegal escape sequence at " <> show pos
+
+addCurrentChar :: String -> AlexInput -> Int -> Alex Lexeme
+addCurrentChar acc input@(_, _, _, x:_) len@1 =
+  addChar x acc input len
+addCurrentChar _ (pos, _, _, _) _ =
+  alexError $ "Invalid char input at " <> show pos
 
 }
