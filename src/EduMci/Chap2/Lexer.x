@@ -7,6 +7,7 @@ module EduMci.Chap2.Lexer (
   AlexUserState (..),
   Token (..),
   Alex,
+  AlexPosn (..),
   runAlex,
   alexMonadScan,
   alexGetUserState,
@@ -86,9 +87,17 @@ tokens :-
 
 {
 
+newtype RevRawStr =
+  RevRawStr String
+    deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+
+newtype RevParStr =
+  RevParStr String
+    deriving newtype (Eq, Ord, Show, Semigroup, Monoid)
+
 data AlexUserState =
     AlexUserStateVoid
-  | AlexUserStateString String
+  | AlexUserStateString AlexPosn RevRawStr RevParStr
   | AlexUserStateComment Int
   deriving (Eq, Show)
 
@@ -205,7 +214,7 @@ pushComment input len = do
   case st of
     AlexUserStateVoid ->
       alexSetUserState $ AlexUserStateComment 1
-    AlexUserStateString _ ->
+    AlexUserStateString {} ->
       failure st
     AlexUserStateComment x ->
       alexSetUserState $ AlexUserStateComment $ x + 1
@@ -223,7 +232,7 @@ popComment input len = do
   st <- alexGetUserState
   case st of
     AlexUserStateVoid -> failure st
-    AlexUserStateString _ -> failure st
+    AlexUserStateString {} -> failure st
     AlexUserStateComment x0 ->
       case x0 - 1 of
         x | x < 0 ->
@@ -243,50 +252,80 @@ popComment input len = do
           <> show st
 
 startString :: AlexInput -> Int -> Alex Lexeme
-startString _ _ = do
-  alexSetUserState $ AlexUserStateString mempty
+startString (pos, _, _, input) len = do
+  alexSetUserState $
+    AlexUserStateString pos (RevRawStr $ take len input) mempty
   alexMonadScan
 
 withString ::
-  (String -> AlexInput -> Int -> Alex Lexeme)
+  ((String -> AlexUserState) -> AlexInput -> Int -> Alex Lexeme)
   -> AlexInput
   -> Int
   -> Alex Lexeme
-withString f input len = do
+withString f input@(_, _, _, raw) len = do
   st <- alexGetUserState
   case st of
-    AlexUserStateVoid -> failure st
-    AlexUserStateString x -> f x input len
-    AlexUserStateComment _ -> failure st
+    AlexUserStateVoid ->
+      failure st
+    AlexUserStateString pos rawAcc parAcc -> do
+      --
+      -- TODO : optimize this with Maybe Char type?
+      --
+      let builder x =
+            AlexUserStateString
+              pos
+              ((RevRawStr . reverse . take len $ raw) <> rawAcc)
+              ((RevParStr $ reverse x) <> parAcc)
+      f builder input len
+    AlexUserStateComment {} ->
+      failure st
   where
     failure st =
       alexError $ "Unexpected withString st " <> show st
 
-addChar :: Char -> String -> AlexInput -> Int -> Alex Lexeme
-addChar x xs _ _ = do
-  alexSetUserState . AlexUserStateString $ x : xs
+addChar :: Char
+           -> (String -> AlexUserState)
+           -> AlexInput
+           -> Int
+           -> Alex Lexeme
+addChar x builder _ _ = do
+  alexSetUserState $ builder [x]
   alexMonadScan
 
-leaveString :: String -> AlexInput -> Int -> Alex Lexeme
-leaveString xs (pos, _, _, input) len = do
-  alexSetUserState AlexUserStateVoid
-  pure $ Lexeme {
-    lexPosn = pos,
-    lexToken = STRING $ reverse xs,
-    --
-    -- TODO : fix this (always one char)
-    -- and test no information loss here
-    --
-    lexRaw = Just $ take len input
-  }
+leaveString :: (String -> AlexUserState)
+               -> AlexInput
+               -> Int
+               -> Alex Lexeme
+leaveString builder _ _ =
+  case builder mempty of
+    st@AlexUserStateVoid -> failure st
+    st@AlexUserStateComment {} -> failure st
+    AlexUserStateString pos rawAcc parAcc -> do
+      alexSetUserState AlexUserStateVoid
+      pure $ Lexeme {
+        lexPosn = pos,
+        lexToken = STRING . reverse . coerce $ parAcc,
+        lexRaw = Just . reverse . coerce $ rawAcc
+      }
+ where
+  failure st =
+      alexError $
+        "Unexpected leaveString AlexUserState " <> show st
 
-illegalEscapeSequence :: String -> AlexInput -> Int -> Alex Lexeme
+
+illegalEscapeSequence :: (String -> AlexUserState)
+                         -> AlexInput
+                         -> Int
+                         -> Alex Lexeme
 illegalEscapeSequence _ (pos, _, _, _) _ =
   alexError $ "Illegal escape sequence at " <> show pos
 
-addCurrentChar :: String -> AlexInput -> Int -> Alex Lexeme
-addCurrentChar acc input@(_, _, _, x:_) len@1 =
-  addChar x acc input len
+addCurrentChar :: (String -> AlexUserState)
+                  -> AlexInput
+                  -> Int
+                  -> Alex Lexeme
+addCurrentChar builder input@(_, _, _, x:_) len@1 =
+  addChar x builder input len
 addCurrentChar _ (pos, _, _, _) _ =
   alexError $ "Invalid char input at " <> show pos
 

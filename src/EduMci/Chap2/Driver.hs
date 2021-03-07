@@ -26,8 +26,8 @@ scannerLoop = do
       s0 <- alexGetUserState
       case s0 of
         AlexUserStateVoid -> pure [lex]
-        AlexUserStateString _ -> alexError "EOF: string not closed"
-        AlexUserStateComment _ -> alexError "EOF: comment not closed"
+        AlexUserStateString {} -> alexError "EOF: string not closed"
+        AlexUserStateComment {} -> alexError "EOF: comment not closed"
     else do
       lexs <- scannerLoop
       pure $ lex : lexs
