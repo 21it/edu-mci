@@ -21,6 +21,7 @@ stdenv.mkDerivation {
   buildInputs = [
     /* IDE */
     haskell-ide
+    haskellPackages.alex
     /* Apps */
     postgresql
     /* Utils */

@@ -2,6 +2,8 @@
 
 {-# OPTIONS_GHC -Wno-deprecations #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module EduMci.Chap2.Lexer (
   Lexeme (..),
   AlexUserState (..),
